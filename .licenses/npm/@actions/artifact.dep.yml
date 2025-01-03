@@ -1,9 +1,9 @@
 ---
-name: "@actions/artifact"
-version: 2.2.0
+name: "artifact-s3"
+version: 0.1.0
 type: npm
 summary: Actions artifact lib
-homepage: https://github.com/actions/toolkit/tree/main/packages/artifact
+homepage: https://github.com/NinjaManatee/artifact-s3
 license: mit
 licenses:
 - sources: LICENSE.md

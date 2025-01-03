@@ -1,8 +1,8 @@
-# `@actions/upload-artifact/merge`
+# `upload-artifact-s3/merge`
 
-Merge multiple [Actions Artifacts](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts) in Workflow Runs. Internally powered by [@actions/artifact](https://github.com/actions/toolkit/tree/main/packages/artifact) package.
+Merge multiple Actions Artifacts on AWS S3 in Workflow Runs. Internally powered by [artifact-s3](https://github.com/NinjaManatee/artifact-s3) package.
 
-- [`@actions/upload-artifact/merge`](#actionsupload-artifactmerge)
+- [`upload-artifact-s3/merge`](#upload-artifact-s3merge)
   - [Usage](#usage)
     - [Inputs](#inputs)
     - [Outputs](#outputs)
@@ -15,9 +15,9 @@ Merge multiple [Actions Artifacts](https://docs.github.com/en/actions/using-work
 ## Usage
 
 > [!IMPORTANT]
-> upload-artifact/merge@v4+ is not currently supported on GHES.
+> upload-artifact-s3/merge@main is not currently supported on GHES.
 
-Note: this actions can only merge artifacts created with actions/upload-artifact@v4+
+Note: this actions can only merge artifacts created with upload-artifact-s3@main
 
 This sub-action is a helper to merge multiple artifacts after they are created. To do so, it will download multiple artifacts to a temporary directory and reupload them as a single artifact.
 
@@ -26,7 +26,7 @@ For most cases, this may not be the most efficient solution. See [the migration 
 ### Inputs
 
 ```yaml
-- uses: actions/upload-artifact/merge@v4
+- uses: NinjaManatee/upload-artifact-s3/merge@main
   with:
     # The name of the artifact that the artifacts will be merged into
     # Optional. Default is 'merged-artifacts'
@@ -86,13 +86,13 @@ jobs:
       - name: Run a one-line script
         run: echo "hello from job ${{ matrix.foo }}" > file-${{ matrix.foo }}.txt
       - name: Upload
-        uses: actions/upload-artifact@v4
+        uses: NinjaManatee/upload-artifact-s3@main
         with:
           name: my-artifact-${{ matrix.foo }}
           path: file-${{ matrix.foo }}.txt
 ```
 
-Each of the following examples will use the `needs: upload` as a prerequesite before any merging operations.
+Each of the following examples will use the `needs: upload` as a prerequisite before any merging operations.
 
 ### Combining all artifacts in a workflow run
 
@@ -106,7 +106,7 @@ jobs:
     needs: upload
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: NinjaManatee/upload-artifact-s3/merge@main
 ```
 
 This will result in an artifact called `merged-artifacts` with the following content:
@@ -128,7 +128,7 @@ jobs:
     needs: upload
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: NinjaManatee/upload-artifact-s3/merge@main
         with:
           name: my-amazing-merged-artifact
           pattern: my-artifact-*
@@ -146,7 +146,7 @@ jobs:
     needs: upload
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: NinjaManatee/upload-artifact-s3/merge@main
         with:
           separate-directories: true
 ```
@@ -175,7 +175,7 @@ jobs:
     needs: upload
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: NinjaManatee/upload-artifact-s3/merge@main
         with:
           delete-merged: true
 ```
@@ -194,7 +194,7 @@ jobs:
     needs: upload
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: NinjaManatee/upload-artifact-s3/merge@main
         with:
           retention-days: 1
           compression-level: 9

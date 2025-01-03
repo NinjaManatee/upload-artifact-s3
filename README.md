@@ -1,19 +1,10 @@
-# `@actions/upload-artifact`
+# `upload-artifact-s3`
 
-> [!WARNING]
-> actions/upload-artifact@v3 is scheduled for deprecation on **November 30, 2024**. [Learn more.](https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/)
-> Similarly, v1/v2 are scheduled for deprecation on **June 30, 2024**.
-> Please update your workflow to use v4 of the artifact actions.
-> This deprecation will not impact any existing versions of GitHub Enterprise Server being used by customers.
+Upload Actions Artifacts on AWS S3 from your Workflow Runs. Internally powered by [NinjaManatee/artifact-s3](https://github.com/NinjaManatee/artifact-s3) package.
 
-Upload [Actions Artifacts](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts) from your Workflow Runs. Internally powered by [@actions/artifact](https://github.com/actions/toolkit/tree/main/packages/artifact) package.
+See also [download-artifact-s3](https://github.com/NinjaManatee/download-artifact-s3).
 
-See also [download-artifact](https://github.com/actions/download-artifact).
-
-- [`@actions/upload-artifact`](#actionsupload-artifact)
-  - [v4 - What's new](#v4---whats-new)
-    - [Improvements](#improvements)
-    - [Breaking Changes](#breaking-changes)
+- [`upload-artifact-s3`](#upload-artifact-s3)
   - [Usage](#usage)
     - [Inputs](#inputs)
     - [Outputs](#outputs)
@@ -37,43 +28,12 @@ See also [download-artifact](https://github.com/actions/download-artifact).
     - [Permission Loss](#permission-loss)
   - [Where does the upload go?](#where-does-the-upload-go)
 
-
-## v4 - What's new
-
-> [!IMPORTANT]
-> upload-artifact@v4+ is not currently supported on GHES yet. If you are on GHES, you must use [v3](https://github.com/actions/upload-artifact/releases/tag/v3).
-
-The release of upload-artifact@v4 and download-artifact@v4 are major changes to the backend architecture of Artifacts. They have numerous performance and behavioral improvements.
-
-For more information, see the [`@actions/artifact`](https://github.com/actions/toolkit/tree/main/packages/artifact) documentation.
-
-There is also a new sub-action, `actions/upload-artifact/merge`. For more info, check out that action's [README](./merge/README.md).
-
-### Improvements
-
-1. Uploads are significantly faster, upwards of 90% improvement in worst case scenarios.
-2. Once uploaded, an Artifact ID is returned and Artifacts are immediately available in the UI and [REST API](https://docs.github.com/en/rest/actions/artifacts). Previously, you would have to wait for the run to be completed before an ID was available or any APIs could be utilized.
-3. The contents of an Artifact are uploaded together into an _immutable_ archive. They cannot be altered by subsequent jobs unless the Artifacts are deleted and recreated (where they will have a new ID). Both of these factors help reduce the possibility of accidentally corrupting Artifact files.
-4. The compression level of an Artifact can be manually tweaked for speed or size reduction.
-
-### Breaking Changes
-
-1. On self hosted runners, additional [firewall rules](https://github.com/actions/toolkit/tree/main/packages/artifact#breaking-changes) may be required.
-2. Uploading to the same named Artifact multiple times.
-
-    Due to how Artifacts are created in this new version, it is no longer possible to upload to the same named Artifact multiple times. You must either split the uploads into multiple Artifacts with different names, or only upload once. Otherwise you _will_ encounter an error.
-
-3. Limit of Artifacts for an individual job. Each job in a workflow run now has a limit of 500 artifacts.
-4. With `v4.4` and later, hidden files are excluded by default.
-
-For assistance with breaking changes, see [MIGRATION.md](docs/MIGRATION.md).
-
 ## Usage
 
 ### Inputs
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     # Name of the artifact to upload.
     # Optional. Default is 'artifact'
@@ -141,7 +101,7 @@ steps:
 ### Upload an Entire Directory
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: path/to/artifact/ # or path/to/artifact
@@ -150,7 +110,7 @@ steps:
 ### Upload using a Wildcard Pattern
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: path/**/[abc]rtifac?/*
@@ -159,7 +119,7 @@ steps:
 ### Upload using Multiple Paths and Exclusions
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: |
@@ -190,7 +150,7 @@ Relative and absolute file paths are both allowed. Relative paths are rooted aga
 
 ### Altering compressions level (speed v. size)
 
-If you are uploading large or easily compressable data to your artifact, you may benefit from tweaking the compression level. By default, the compression level is `6`, the same as GNU Gzip.
+If you are uploading large or easily compressible data to your artifact, you may benefit from tweaking the compression level. By default, the compression level is `6`, the same as GNU Gzip.
 
 The value can range from 0 to 9:
   - 0: No compression
@@ -207,7 +167,7 @@ For instance, if you are uploading random binary data, you can save a lot of tim
 - name: Make a 1GB random binary file
   run: |
     dd if=/dev/urandom of=my-1gb-file bs=1M count=1000
-- uses: actions/upload-artifact@v4
+- uses: NinjaManat33/upload-artifact-s3@main
   with:
     name: my-artifact
     path: my-1gb-file
@@ -220,7 +180,7 @@ But, if you are uploading data that is easily compressed (like plaintext, code, 
 - name: Make a file with a lot of repeated text
   run: |
     for i in {1..100000}; do echo -n 'foobar' >> foobar.txt; done
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: foobar.txt
@@ -232,7 +192,7 @@ But, if you are uploading data that is easily compressed (like plaintext, code, 
 If a path (or paths), result in no files being found for the artifact, the action will succeed but print out a warning. In certain scenarios it may be desirable to fail the action or suppress the warning. The `if-no-files-found` option allows you to customize the behavior of the action if no files are found:
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: path/to/artifact/
@@ -241,17 +201,15 @@ If a path (or paths), result in no files being found for the artifact, the actio
 
 ### (Not) Uploading to the same artifact
 
-Unlike earlier versions of `upload-artifact`, uploading to the same artifact via multiple jobs is _not_ supported with `v4`.
-
 ```yaml
 - run: echo hi > world.txt
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     # implicitly named as 'artifact'
     path: world.txt
 
 - run: echo howdy > extra-file.txt
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     # also implicitly named as 'artifact', will fail here!
     path: extra-file.txt
@@ -277,7 +235,7 @@ jobs:
     - name: Build
       run: ./some-script --version=${{ matrix.version }} > my-binary
     - name: Upload
-      uses: actions/upload-artifact@v4
+      uses: NinjaManatee/upload-artifact-s3@main
       with:
         name: binary-${{ matrix.os }}-${{ matrix.version }}
         path: my-binary
@@ -285,7 +243,7 @@ jobs:
 
 This will result in artifacts like: `binary-ubuntu-latest-a`, `binary-windows-latest-b`, and so on.
 
-Previously the behavior _allowed_ for the artifact names to be the same which resulted in unexpected mutations and accidental corruption. Artifacts created by upload-artifact@v4 are immutable.
+Artifacts created by upload-artifact-s3@main are immutable.
 
 ### Environment Variables and Tilde Expansion
 
@@ -295,7 +253,7 @@ You can use `~` in the path input as a substitute for `$HOME`. Basic tilde expan
   - run: |
       mkdir -p ~/new/artifact
       echo hello > ~/new/artifact/world.txt
-  - uses: actions/upload-artifact@v4
+  - uses: NinjaManatee/upload-artifact-s3@main
     with:
       name: my-artifacts
       path: ~/new/**/*
@@ -310,7 +268,7 @@ Environment variables along with context expressions can also be used for input.
     - run: |
         mkdir -p ${{ github.workspace }}/artifact
         echo hello > ${{ github.workspace }}/artifact/world.txt
-    - uses: actions/upload-artifact@v4
+    - uses: NinjaManatee/upload-artifact-s3@main
       with:
         name: ${{ env.name }}-name
         path: ${{ github.workspace }}/artifact/**/*
@@ -324,7 +282,7 @@ For environment variables created in other steps, make sure to use the `env` exp
         mkdir testing
         echo "This is a file to upload" > testing/file.txt
         echo "artifactPath=testing/file.txt" >> $GITHUB_ENV
-    - uses: actions/upload-artifact@v4
+    - uses: NinjaManatee/upload-artifact-s3@main
       with:
         name: artifact
         path: ${{ env.artifactPath }} # this will resolve to testing/file.txt at runtime
@@ -339,7 +297,7 @@ Artifacts are retained for 90 days by default. You can specify a shorter retenti
     run: echo "I won't live long" > my_file.txt
 
   - name: Upload Artifact
-    uses: actions/upload-artifact@v4
+    uses: NinjaManatee/upload-artifact-s3@main
     with:
       name: my-artifact
       path: my_file.txt
@@ -355,7 +313,7 @@ If an artifact upload is successful then an `artifact-id` output is available. T
 #### Example output between steps
 
 ```yml
-    - uses: actions/upload-artifact@v4
+    - uses: NinjaManatee/upload-artifact-s3@main
       id: artifact-upload-step
       with:
         name: my-artifact
@@ -374,7 +332,7 @@ jobs:
     outputs:
       output1: ${{ steps.artifact-upload-step.outputs.artifact-id }}
     steps:
-      - uses: actions/upload-artifact@v4
+      - uses: NinjaManatee/upload-artifact-s3@main
         id: artifact-upload-step
         with:
           name: my-artifact
@@ -400,7 +358,7 @@ jobs:
       - name: Create a file
         run: echo "hello world" > my-file.txt
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: NinjaManatee/upload-artifact-s3@main
         with:
           name: my-artifact # NOTE: same artifact name
           path: my-file.txt
@@ -411,7 +369,7 @@ jobs:
       - name: Create a different file
         run: echo "goodbye world" > my-file.txt
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: NinjaManatee/upload-artifact-s3@main
         with:
           name: my-artifact # NOTE: same artifact name
           path: my-file.txt
@@ -427,7 +385,7 @@ Any files that contain sensitive information that should not be in the uploaded 
 using the `path`:
 
 ```yaml
-- uses: actions/upload-artifact@v4
+- uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     include-hidden-files: true
@@ -463,7 +421,7 @@ If you must preserve permissions, you can `tar` all of your files together befor
   run: tar -cvf my_files.tar /path/to/my/directory
 
 - name: 'Upload Artifact'
-  uses: actions/upload-artifact@v4
+  uses: NinjaManatee/upload-artifact-s3@main
   with:
     name: my-artifact
     path: my_files.tar
@@ -477,4 +435,4 @@ At the bottom of the workflow summary page, there is a dedicated section for art
 
 There is a trashcan icon that can be used to delete the artifact. This icon will only appear for users who have write permissions to the repository.
 
-The size of the artifact is denoted in bytes. The displayed artifact size denotes the size of the zip that `upload-artifact` creates during upload.
+The size of the artifact is denoted in bytes. The displayed artifact size denotes the size of the zip that `upload-artifact-s3` creates during upload.
